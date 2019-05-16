@@ -2,73 +2,56 @@
 <html lang="en">
 
 <head>
-  <link href='//fonts.googleapis.com/css?family=Roboto:400,300,700' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+<script>
+  function start() {
+    gapi.load('auth2', function() {
+      auth2 = gapi.auth2.init({
+        client_id: '1051489259126-f390iml9ta465rfgm6v5h59phli5dai9.apps.googleusercontent.com'
 
-  <!--google -->
-  <script src="//apis.google.com/js/platform.js?onload=init" async defer></script>`
-<!--
-  <meta name="google-signin-client_id"
-    content="759306340031-p8a40fq9t90jfrhiqpe72t8r2v01s8rl.apps.googleusercontent.com">
--->
+      });
+    });
+  }
+</script>
+
 </head>
-
 <body>
   <div class="container">
+<button id="signinButton">Google Signin</button>
+<div id="result"></div>
+</div>
 
 
-    <!-- start Google Start Login -->
-    <h1>Sign with your Google Account</h1>
-
-    <button  class="g-signin2" id="signinButton">Sign in with Google</button>
-    <script>
-      function init() {
-
-        gapi.load('auth2', function() {
-          auth2 = gapi.auth2.init({
-            client_id: '759306340031-p8a40fq9t90jfrhiqpe72t8r2v01s8rl.apps.googleusercontent.com',
-            // Scopes to request in addition to 'profile' and 'email'
-            //scope: 'additional_scope'
-          });
-
-            $("#signinButton").click(function(){
-
-              auth2.grantOfflineAccess({'redirect_uri': 'postmessage'}).then(offlineAccess);
-            });
+<script>
+  $('#signinButton').click(function() {
+    function signInCallback(authResult){
+      if (authResult['code']){
+        $('#signinButton').attr('style', 'display: none');
+        $.ajax({
+          type: 'POST',
+          url: '/gconnect?state={{STATE}}',
+          headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+          },
+          contentType: 'application/octet-stream; charset=utf-8',
+          success:function(result){
+            $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+                 setTimeout(function() {
+                  window.location.href = "/";
+                 }, 2000);
+          },
+          processData:false,
+          data:authResult['code']
         });
+      } else{
+        // handle error
+        console.log('There was an error: ' + authResult['error']);
+        $('#result').html('Failed to make a server-side call. Check your configuration and console.');
       }
-
-
-      function offlineAccess(resp) {
-          var auth_code = resp.code;
-          console.log(resp);
-          $.ajax({
-            type: "POST",
-            url: '/gconnect?state={{STATE}}',
-            processData: false,
-            contentType: 'application/octet-stream; charset=utf-8',
-            data: auth_code,
-            success: function (result) {
-              $("body").html(result);
-              setTimeout(function () { window.location.href = '/restaurant' }, 3000);
-
-            }
-          });
-
-      }
-    </script>
-
-    <!-- start Google End Login -->
-
-
-
-
-
-
-
-  </div>
+    }
+    auth2.grantOfflineAccess().then(signInCallback);
+  });
+</script>
 </body>
-
 </html>
