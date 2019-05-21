@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Restaurant, MenuItem, User
 from flask import session as login_session
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import MultipleResultsFound
 import random
 import string
 
@@ -111,6 +113,15 @@ def gconnect():
     login_session['username'] = data['name']
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
+
+    # when user logs in with gmail account, we will check if user's email is already in the database
+    # if user's email is not in database, then we make new account locally
+    # store user id in login session
+
+    if getUserID(login_session['email']) is None:
+        login_session['user_id'] = createUser(login_session)
+
+
 
     output = ''
     output += '<h1>Welcome, '
